@@ -3,8 +3,8 @@
 // @namespace    https://github.com/VcEnox/Double-Ctrl-Image-Zoom-for-Floorp
 // @author       VcEnox
 // @version      2.0
-// @downloadURL  https://raw.githubusercontent.com/VcEnox/Double-Ctrl-Image-Zoom-for-Floorp-/refs/heads/main/Double-Ctrl-Image-Zoom-for-Floorp.js
-// @updateURL    https://raw.githubusercontent.com/VcEnox/Double-Ctrl-Image-Zoom-for-Floorp-/refs/heads/main/Double-Ctrl-Image-Zoom-for-Floorp.js
+// @downloadURL  https://raw.githubusercontent.com/VcEnox/Double-Ctrl-Image-Zoom-for-Floorp/refs/heads/main/Double-Ctrl-Image-Zoom-for-Floorp.js
+// @updateURL    https://raw.githubusercontent.com/VcEnox/Double-Ctrl-Image-Zoom-for-Floorp/refs/heads/main/Double-Ctrl-Image-Zoom-for-Floorp.js
 // @description  Pressing Ctrl twice on the image under the cursor zooms it to full screen; it supports zooming in and out with the mouse wheel and navigating by dragging.
 // @match        *://*/*
 // @grant        none
