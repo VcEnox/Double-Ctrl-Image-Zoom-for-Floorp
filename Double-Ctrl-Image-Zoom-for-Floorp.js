@@ -1,8 +1,11 @@
 // ==UserScript==
-// @name         Edge Tarzı Çift Ctrl Resim Büyütme (Zoom Destekli)
-// @namespace    http://tampermonkey.net/
+// @name         Double Ctrl Image Zoom for Floorp
+// @namespace    https://github.com/VcEnox/Double-Ctrl-Image-Zoom-for-Floorp
+// @author       VcEnox
 // @version      2.0
-// @description  İmlecin altındaki resme çift Ctrl basıldığında tam ekran büyütür, tekerlek ile yakınlaştırma/uzaklaştırma ve sürükleyerek gezinme destekler
+// @downloadURL  https://raw.githubusercontent.com/VcEnox/Double-Ctrl-Image-Zoom-for-Floorp-/refs/heads/main/Double-Ctrl-Image-Zoom-for-Floorp.js
+// @updateURL    https://raw.githubusercontent.com/VcEnox/Double-Ctrl-Image-Zoom-for-Floorp-/refs/heads/main/Double-Ctrl-Image-Zoom-for-Floorp.js
+// @description  Pressing Ctrl twice on the image under the cursor zooms it to full screen; it supports zooming in and out with the mouse wheel and navigating by dragging.
 // @match        *://*/*
 // @grant        none
 // ==/UserScript==
@@ -18,28 +21,29 @@
 
     const BG_URL_REGEX = /url\((['"]?)(.*?)\1\)/;
 
-    // Fare pozisyonunu sürekli takip et (last.fm gibi sitelerde imgin üstünde
-    // görünmez overlay/hover katmanları olabildiği için mouseover yetersiz kalıyor)
+   // Continuously track the mouse position
+   //(since sites like last.fm may have invisible overlay or hover layers on top of images, using mouseover alone isn't sufficient)
     document.addEventListener('mousemove', (e) => {
         mouseX = e.clientX;
         mouseY = e.clientY;
     }, { passive: true });
 
-    // O anki fare konumundaki tüm elementleri (üst üste binenler dahil) tarayıp
-    // gerçek görseli bulur: önce <img>, olmazsa background-image kullanan katman
+    // It scans all elements at the current mouse position 
+    // (including overlapping ones) to find the actual image: first <img>, 
+    // and if that’s not found, the layer using a background-image
     function findImageAtPoint(x, y) {
         const stack = typeof document.elementsFromPoint === 'function'
             ? document.elementsFromPoint(x, y)
             : [document.elementFromPoint(x, y)].filter(Boolean);
 
-        // 1) Doğrudan <img> etiketi ara
+        // 1) Search directly for the <img> tag
         for (const el of stack) {
             if (el && el.tagName && el.tagName.toLowerCase() === 'img' && (el.currentSrc || el.src)) {
                 return { type: 'img', src: el.currentSrc || el.src };
             }
         }
 
-        // 2) İçinde tek bir <img> barındıran kapsayıcıları ara (ör. link/span sarmalı)
+        // 2) Search for containers that contain a single <img> (e.g., link/span wrappers)
         for (const el of stack) {
             if (!el || !el.querySelector) continue;
             const innerImg = el.querySelector('img');
@@ -48,7 +52,7 @@
             }
         }
 
-        // 3) CSS background-image kullanan katmanları ara
+        // 3) Search for layers that use the CSS `background-image` property
         for (const el of stack) {
             if (!el) continue;
             const bg = getComputedStyle(el).backgroundImage;
@@ -61,7 +65,7 @@
         return null;
     }
 
-    // Zoom/pan durumu
+    // Zoom/pan status
     let scale = 1;
     let translateX = 0;
     let translateY = 0;
@@ -75,10 +79,10 @@
     const MAX_SCALE = 8;
     const ZOOM_STEP = 0.15;
 
-    // Çift Ctrl algılama
+    // Double Ctrl detection
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Control') {
-            if (e.repeat) return; // Tuş basılı tutulunca gelen tekrar olaylarını yok say
+            if (e.repeat) return; // Ignore repeat events that occur when a key is held down
             const tag = document.activeElement && document.activeElement.tagName.toLowerCase();
             if (tag === 'input' || tag === 'textarea' || (document.activeElement && document.activeElement.isContentEditable)) {
                 return;
@@ -130,15 +134,15 @@
 
         overlay.appendChild(zoomedImg);
 
-        // Tekerlek ile zoom
+        // Zoom with the mouse wheel
         overlay.addEventListener('wheel', onWheel, { passive: false });
 
-        // Sürükleyerek gezinme (sadece zoom > 1 iken)
+        // Drag-to-navigate (only when zoom > 1)
         zoomedImg.addEventListener('mousedown', onDragStart);
         window.addEventListener('mousemove', onDragMove);
         window.addEventListener('mouseup', onDragEnd);
 
-        // Overlay'e (resmin dışına) tıklayınca kapat
+        // Close when you click on the overlay (outside the image)
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) removeOverlay();
         });
@@ -151,7 +155,7 @@
         e.preventDefault();
 
         const rect = zoomedImg.getBoundingClientRect();
-        // Fare imlecinin resim üzerindeki oranı (zoom merkezini imlece göre ayarlamak için)
+        // The mouse cursor's position relative to the image (to set the zoom center relative to the cursor)
         const offsetX = e.clientX - rect.left - rect.width / 2;
         const offsetY = e.clientY - rect.top - rect.height / 2;
 
@@ -159,7 +163,7 @@
         const delta = e.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP;
         scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale + delta * scale));
 
-        // İmlecin işaret ettiği noktayı sabit tutmak için translate ayarı
+        // The “translate” setting to keep the cursor's position fixed
         const scaleRatio = scale / prevScale;
         translateX = translateX * scaleRatio - offsetX * (scaleRatio - 1);
         translateY = translateY * scaleRatio - offsetY * (scaleRatio - 1);
